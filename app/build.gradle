@@ -32,5 +32,7 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 
     implementation 'com.github.renosyah:PDF-Viewer-Library:1.0.0'
-    implementation project(path: ':invoicemakerlib')
+    implementation 'com.github.renosyah:Invoice-Maker-Library:1.0.0'
+
+    //implementation project(path: ':invoicemakerlib')
 }

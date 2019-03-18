@@ -1,7 +1,6 @@
 # Invoice Maker Library
 
-ini adalah library simple untuk membuat invoice dalam bentuk file pdf
-dan berikut ini adalah tampilan dari isi file pdf dengan menggunakan [PDF Viewer]()
+ini adalah library simple untuk membuat invoice dalam bentuk file pdf,dari isi file pdf tersebut di view dengan menggunakan [PDF Viewer](https://github.com/renosyah/EBookLibrary) dari EBookLibrary dan berikut ini adalah tampilan : 
 
 ![GitHub Logo](/image/image_1.jpg)
 
