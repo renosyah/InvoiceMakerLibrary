@@ -3,7 +3,7 @@ package com.example.renosyahputra.invoicemakerlib.transaction_model;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-public class TransactionModel implements Serializable {
+public class TransactionModel implements TransactionDataInterface {
 
     private DateTransaction dateTransaction = new DateTransaction();
     private ArrayList<Item> items = new ArrayList<>();

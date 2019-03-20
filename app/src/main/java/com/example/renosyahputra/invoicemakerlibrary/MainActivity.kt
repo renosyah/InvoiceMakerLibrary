@@ -21,6 +21,7 @@ class MainActivity : AppCompatActivity(),View.OnClickListener,
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         printPdf.setOnClickListener(this)
+        printPdfCustom.setOnClickListener(this)
     }
 
     override fun onClick(v: View?) {
@@ -30,16 +31,34 @@ class MainActivity : AppCompatActivity(),View.OnClickListener,
                 val item = ArrayList<TransactionModel.Item>()
                 item.add(TransactionModel.Item("Burger",4,100))
                 item.add(TransactionModel.Item("SandWitch",2,200))
+
                 val transaction = TransactionModel(TransactionModel.DateTransaction(9,12,2019),item,
                     TransactionModel.OtherData("My Invoice For My Fast Food","$"))
 
-                InvoiceMakerInit.newIntance()
+                InvoiceMakerInit.newInstance()
                     .setContext(this@MainActivity)
                     .setFolderTarget("myinvoice")
                     .setTransactionModel(transaction)
                     .setOnInvoiceMakerInitListener(this)
                     .setOnInvoiceMakerRequestPermissionListener(this)
                     .makePDF("invoice1001.pdf")
+            }
+
+            printPdfCustom -> {
+
+                val items = ArrayList<MyCustomTransactionModel.Item>()
+                items.add(MyCustomTransactionModel.Item("burger",400))
+                items.add(MyCustomTransactionModel.Item("sandwitch",400))
+                val transaction = MyCustomTransactionModel(items)
+
+
+                InvoiceMakerInit.newInstance()
+                    .setContext(this@MainActivity)
+                    .setFolderTarget("myinvoice")
+                    .setTransactionModel(transaction)
+                    .setOnInvoiceMakerInitListener(this)
+                    .setOnInvoiceMakerRequestPermissionListener(this)
+                    .makePDF("invoice1001_custom.pdf")
             }
         }
     }

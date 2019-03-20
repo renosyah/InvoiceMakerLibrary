@@ -8,7 +8,7 @@ import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import com.example.renosyahputra.invoicemakerlib.fragmentDialogRequestPermission.FragmentDialogRequestPermission;
-import com.example.renosyahputra.invoicemakerlib.transaction_model.TransactionModel;
+import com.example.renosyahputra.invoicemakerlib.transaction_model.TransactionDataInterface;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.html.simpleparser.HTMLWorker;
@@ -20,12 +20,12 @@ public class InvoiceMakerInit {
 
     private static InvoiceMakerInit _instance;
     private Context context;
-    private TransactionModel transactionModel;
+    private TransactionDataInterface transactionModel;
     private OnInvoiceMakerInitListener onInvoiceMakerInitListener;
     private OnInvoiceMakerRequestPermissionListener onInvoiceMakerRequestPermissionListener;
     private String folderTarget = "invoice";
 
-    public static InvoiceMakerInit newIntance() {
+    public static InvoiceMakerInit newInstance() {
         _instance = new InvoiceMakerInit();
         return _instance;
     }
@@ -35,7 +35,7 @@ public class InvoiceMakerInit {
         return _instance;
     }
 
-    public InvoiceMakerInit setTransactionModel(TransactionModel transactionModel) {
+    public InvoiceMakerInit setTransactionModel(TransactionDataInterface transactionModel) {
         _instance.transactionModel = transactionModel;
         return _instance;
     }
