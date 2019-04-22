@@ -25,7 +25,7 @@ class MainActivity : AppCompatActivity(),View.OnClickListener,
         setContentView(R.layout.activity_main)
         printPdf.setOnClickListener(this)
         printPdfCustom.setOnClickListener(this)
-        startActivity(Intent(this@MainActivity, PrintPDFActivity::class.java))
+
     }
 
     override fun onClick(v: View?) {
@@ -47,6 +47,8 @@ class MainActivity : AppCompatActivity(),View.OnClickListener,
                     .setOnInvoiceMakerInitListener(this)
                     .setOnInvoiceMakerRequestPermissionListener(this)
                     .makePDF("invoice1001.pdf")
+
+
             }
 
             printPdfCustom -> {
@@ -70,11 +72,15 @@ class MainActivity : AppCompatActivity(),View.OnClickListener,
 
     override fun onInvoiceCreated(file: File) {
 
-        PdfViewer.newInstance()
-            .setContext(this@MainActivity)
-            .setPdfFile(file)
-            .setOnPdfVewerListener(this)
-            .viewPDF()
+//        PdfViewer.newInstance()
+//            .setContext(this@MainActivity)
+//            .setPdfFile(file)
+//            .setOnPdfVewerListener(this)
+//            .viewPDF()
+
+        val i = Intent(this@MainActivity, PrintPDFActivity::class.java)
+        i.putExtra("file_path",file.path)
+        startActivity(i)
 
     }
     override fun onFinishView() {

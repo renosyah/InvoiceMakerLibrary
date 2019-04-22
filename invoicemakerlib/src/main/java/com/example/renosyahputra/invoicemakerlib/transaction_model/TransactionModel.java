@@ -24,7 +24,7 @@ public class TransactionModel implements TransactionDataInterface {
                 "<td colspan='4'><h3 style='text-align:center'>"+this.otherDataTransaction.TitleInvoice+"</h3></td>\n" +
                 "</tr>\n" +
                 "<tr style='text-align:center;'>\n" +
-                "<td>&nbsp; Item &nbsp;</td><td>&nbsp; Price &nbsp;</td><td>&nbsp; Quantity &nbsp;</td><td>&nbsp; SubTotal</td>\n" +
+                "<td>Item </td><td> Price </td><td> Quantity </td><td> SubTotal</td>\n" +
                 "</tr>";
 
         String middle = "";

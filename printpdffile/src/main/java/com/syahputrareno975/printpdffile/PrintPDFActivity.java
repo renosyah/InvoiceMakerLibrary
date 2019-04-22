@@ -10,6 +10,7 @@ import android.bluetooth.BluetoothSocket;
 import android.content.*;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.ParcelUuid;
 import android.support.annotation.NonNull;
@@ -18,17 +19,18 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.*;
+import com.itextpdf.text.pdf.PdfReader;
+import com.itextpdf.text.pdf.parser.PdfTextExtractor;
 import com.syahputrareno975.printpdffile.model.BluetoothDeviceDataModel;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Set;
 import java.util.UUID;
 
 public class PrintPDFActivity extends AppCompatActivity implements
@@ -50,16 +52,7 @@ public class PrintPDFActivity extends AppCompatActivity implements
     private ProgressDialog progressDialog;
     private int PERMISSION_REQUEST_CODE = 142;
 
-    BluetoothSocket mmSocket;
-    BluetoothDevice mmDevice;
-
-    OutputStream mmOutputStream;
-    InputStream mmInputStream;
-    Thread workerThread;
-
-    byte[] readBuffer;
-    int readBufferPosition;
-    volatile boolean stopWorker;
+    private File pdfFile;
 
 
     @Override
@@ -74,6 +67,10 @@ public class PrintPDFActivity extends AppCompatActivity implements
         this.context = this;
         this.intent = getIntent();
 
+        if (intent.hasExtra("file_path")) {
+            this.pdfFile = new File(intent.getStringExtra("file_path"));
+        }
+
         this.deviceListView = findViewById(R.id.printerList);
         this.deviceListView.setOnItemClickListener(this);
 
@@ -83,10 +80,13 @@ public class PrintPDFActivity extends AppCompatActivity implements
         this.textListEmpty = findViewById(R.id.textListEmpty);
         this.textListEmpty.setVisibility(View.GONE);
 
+        checkIfdeviceListEmpty();
+
         this.intentfilter = new IntentFilter();
         this.intentfilter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
         this.intentfilter.addAction(BluetoothDevice.ACTION_FOUND);
         this.intentfilter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
+        this.intentfilter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
 
         registerReceiver(this.receiveConectedBluetoothDeviceData, this.intentfilter);
 
@@ -104,14 +104,17 @@ public class PrintPDFActivity extends AppCompatActivity implements
             this.bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         }
 
-
         setUpShowProgressDialog();
+
+        if (!this.bluetoothAdapter.isEnabled()){
+            showDialogIfBluetoothIsOff();
+            return;
+        }
 
         startScanning();
     }
 
     private void startScanning() {
-        deviceList.clear();
         this.bluetoothAdapter.startDiscovery();
     }
 
@@ -122,6 +125,35 @@ public class PrintPDFActivity extends AppCompatActivity implements
             isGranted = false;
         }
         return isGranted;
+    }
+
+    private void showDialogIfBluetoothIsOff(){
+
+        new AlertDialog.Builder(context)
+                .setTitle("Bluetooth Require")
+                .setMessage("please turn on your bluetooth to start scan other bluetooth device")
+                .setPositiveButton("Turn On", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        bluetoothAdapter.enable();
+                        startScanning();
+                        dialog.dismiss();
+                    }
+                })
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .create()
+                .show();
+
+    }
+
+    private void checkIfdeviceListEmpty(){
+        this.textListEmpty.setVisibility(isListIsEmpty() ? View.VISIBLE : View.GONE);
+        this.deviceListView.setVisibility(isListIsEmpty() ? View.GONE : View.VISIBLE);
     }
 
     private void setUpShowProgressDialog() {
@@ -140,9 +172,6 @@ public class PrintPDFActivity extends AppCompatActivity implements
     }
 
     private void showDialogDeviceNotFound() {
-
-        this.textListEmpty.setVisibility(View.VISIBLE);
-        this.deviceListView.setVisibility(View.GONE);
 
         new AlertDialog.Builder(context)
                 .setTitle("No Device Found")
@@ -175,6 +204,8 @@ public class PrintPDFActivity extends AppCompatActivity implements
             listString.add(b.name + "\n" + b.address);
         }
         this.deviceListView.setAdapter(new ArrayAdapter<String>(context, android.R.layout.simple_dropdown_item_1line, listString));
+
+        checkIfdeviceListEmpty();
     }
 
     private final BroadcastReceiver receiveConectedBluetoothDeviceData = new BroadcastReceiver() {
@@ -199,6 +230,11 @@ public class PrintPDFActivity extends AppCompatActivity implements
                     setAdapter();
                 }
 
+            } else if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)){
+                if (bluetoothAdapter.isEnabled()){
+                    startScanning();
+                }
+
             } else if (BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)) {
                 progressDialog.show();
 
@@ -208,7 +244,7 @@ public class PrintPDFActivity extends AppCompatActivity implements
                 if (isListIsEmpty()) {
                     showDialogDeviceNotFound();
                 }
-
+                checkIfdeviceListEmpty();
             }
         }
     };
@@ -244,7 +280,9 @@ public class PrintPDFActivity extends AppCompatActivity implements
                 .setPositiveButton("Print", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        findBT(deviceList.get(position));
+                        if (pdfFile != null) {
+                            findBT(deviceList.get(position));
+                        }
                         dialog.dismiss();
                     }
                 })
@@ -269,13 +307,27 @@ public class PrintPDFActivity extends AppCompatActivity implements
     private Boolean isAlreadyInList(ArrayList<BluetoothDeviceDataModel> list, BluetoothDeviceDataModel b) {
         boolean isAlreadyIList = false;
         for (BluetoothDeviceDataModel inList : list) {
-            if (inList.address.equals(b.address) && inList.name.equals(b.name)) {
+            if (inList.address!= null && b.address!= null && inList.address.equals(b.address)) {
                 isAlreadyIList = true;
                 break;
             }
         }
         return isAlreadyIList;
     }
+
+
+    // --------------- //
+
+    BluetoothSocket mmSocket;
+    BluetoothDevice mmDevice;
+
+    OutputStream mmOutputStream;
+    InputStream mmInputStream;
+    Thread workerThread;
+
+    byte[] readBuffer;
+    int readBufferPosition;
+    volatile boolean stopWorker;
 
     void findBT(BluetoothDeviceDataModel b) {
         mmDevice = bluetoothAdapter.getRemoteDevice(b.address);
@@ -369,20 +421,15 @@ public class PrintPDFActivity extends AppCompatActivity implements
             Log.e("exceptionbeginListen",e.getMessage());
         }
 
-
         sendData();
 
     }
 
+
     void sendData(){
         try {
 
-            String msg = "SEND NUDES!";
-            msg += "\n";
-
-            mmOutputStream.write(msg.getBytes());
-
-            // tell the user data were sent
+            mmOutputStream.write(readPDF(this.pdfFile).getBytes());
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -405,4 +452,25 @@ public class PrintPDFActivity extends AppCompatActivity implements
             Log.e("exceptioncloseBT",e.getMessage());
         }
     }
+
+    String readPDF(File file){
+
+        String parsedText="";
+        try {
+            PdfReader reader = new PdfReader(file.getPath());
+            int n = reader.getNumberOfPages();
+            for (int i = 0; i <n ; i++) {
+                parsedText += PdfTextExtractor.getTextFromPage(reader, i+1)+"\n";
+            }
+            reader.close();
+
+        } catch (Exception e) {
+
+        }
+
+        Log.e("print result",parsedText);
+
+        return parsedText;
+    }
+
 }

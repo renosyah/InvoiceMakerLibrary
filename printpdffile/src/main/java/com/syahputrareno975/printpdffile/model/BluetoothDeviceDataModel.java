@@ -18,7 +18,7 @@ public class BluetoothDeviceDataModel implements Serializable {
     public BluetoothDeviceDataModel(ParcelUuid[] uuid, BluetoothClass bluetoothClass, String name, String address, int type, int bondState) {
         this.uuid = uuid;
         this.bluetoothClass = bluetoothClass;
-        this.name = name;
+        this.name = name == null ? "Unknown Device" : name;
         this.address = address;
         this.type = type;
         this.bondState = bondState;
