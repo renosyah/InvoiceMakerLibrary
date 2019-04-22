@@ -1,1 +1,1 @@
-include ':app', ':invoicemakerlib'
+include ':app', ':invoicemakerlib', ':printpdffile'

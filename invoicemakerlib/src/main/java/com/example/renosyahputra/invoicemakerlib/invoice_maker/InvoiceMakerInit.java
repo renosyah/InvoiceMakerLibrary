@@ -11,6 +11,8 @@ import com.example.renosyahputra.invoicemakerlib.fragmentDialogRequestPermission
 import com.example.renosyahputra.invoicemakerlib.transaction_model.TransactionDataInterface;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.PageSize;
+import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.html.simpleparser.HTMLWorker;
 import com.itextpdf.text.pdf.PdfWriter;
 
@@ -18,12 +20,16 @@ import java.io.*;
 
 public class InvoiceMakerInit {
 
+    public static String SMALL_INVOICE = "SMALL_INVOICE";
+
+
     private static InvoiceMakerInit _instance;
     private Context context;
     private TransactionDataInterface transactionModel;
     private OnInvoiceMakerInitListener onInvoiceMakerInitListener;
     private OnInvoiceMakerRequestPermissionListener onInvoiceMakerRequestPermissionListener;
     private String folderTarget = "invoice";
+    private Rectangle pagesize = PageSize.A4;
 
     public static InvoiceMakerInit newInstance() {
         _instance = new InvoiceMakerInit();
@@ -52,6 +58,13 @@ public class InvoiceMakerInit {
 
     public InvoiceMakerInit setOnInvoiceMakerRequestPermissionListener(OnInvoiceMakerRequestPermissionListener onInvoiceMakerRequestPermissionListener) {
         _instance.onInvoiceMakerRequestPermissionListener = onInvoiceMakerRequestPermissionListener;
+        return _instance;
+    }
+
+    public InvoiceMakerInit setCustomPage(String namePage) {
+        if (namePage.equals(SMALL_INVOICE)) {
+            _instance.pagesize = new Rectangle(226, PageSize.POSTCARD.getHeight());
+        }
         return _instance;
     }
 
@@ -91,8 +104,11 @@ public class InvoiceMakerInit {
         try {
 
             FileOutputStream fileOutputStream = new FileOutputStream(new File(folderTarget,fileName));
-            Document document = new Document();
+
+            Document document = new Document(this.pagesize);
+
             PdfWriter.getInstance(document,fileOutputStream);
+
             HTMLWorker htmlWorker = new HTMLWorker(document);
 
             document.open();

@@ -18,10 +18,10 @@ public class TransactionModel implements TransactionDataInterface {
         String html = "";
         String top = "<html>\n" +
                 "<head></head>\n" +
-                "<body style='font-family:Andale Mono, monospace'>\n" +
+                "<body style='font-family:Andale Mono, monospace;font-size:6px'>\n" +
                 "\n" +
                 "<table border='0'>\n" +
-                "<td colspan='4'><h2 style='text-align:center'>"+this.otherDataTransaction.TitleInvoice+"</h2></td>\n" +
+                "<td colspan='4'><h3 style='text-align:center'>"+this.otherDataTransaction.TitleInvoice+"</h3></td>\n" +
                 "</tr>\n" +
                 "<tr style='text-align:center;'>\n" +
                 "<td>&nbsp; Item &nbsp;</td><td>&nbsp; Price &nbsp;</td><td>&nbsp; Quantity &nbsp;</td><td>&nbsp; SubTotal</td>\n" +
@@ -29,7 +29,7 @@ public class TransactionModel implements TransactionDataInterface {
 
         String middle = "";
         for (TransactionModel.Item item : this.items){
-            middle += "<tr style='font-size:12px'>\n" +
+            middle += "<tr>\n" +
                     "<td>"+item.getItemName()+"</td>\n" +
                     "<td style='text-align:center'>"+this.otherDataTransaction.getCurrency()+" "+item.getPrice()+"</td>\n" +
                     "<td style='text-align:center'>"+item.getQuantity()+"</td>\n" +

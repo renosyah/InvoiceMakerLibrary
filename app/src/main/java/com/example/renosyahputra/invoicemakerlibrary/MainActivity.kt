@@ -1,12 +1,15 @@
 package com.example.renosyahputra.invoicemakerlibrary
 
+import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.View
 import android.widget.Toast
 import com.example.renosyahputra.invoicemakerlib.invoice_maker.InvoiceMakerInit
+import com.example.renosyahputra.invoicemakerlib.invoice_maker.InvoiceMakerInit.SMALL_INVOICE
 import com.example.renosyahputra.invoicemakerlib.transaction_model.TransactionModel
 import com.example.renosyahputra.pdfviewerlibrary.PdfViewer
+import com.syahputrareno975.printpdffile.PrintPDFActivity
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
 
@@ -22,6 +25,7 @@ class MainActivity : AppCompatActivity(),View.OnClickListener,
         setContentView(R.layout.activity_main)
         printPdf.setOnClickListener(this)
         printPdfCustom.setOnClickListener(this)
+        startActivity(Intent(this@MainActivity, PrintPDFActivity::class.java))
     }
 
     override fun onClick(v: View?) {
@@ -33,11 +37,12 @@ class MainActivity : AppCompatActivity(),View.OnClickListener,
                 item.add(TransactionModel.Item("SandWitch",2,200))
 
                 val transaction = TransactionModel(TransactionModel.DateTransaction(9,12,2019),item,
-                    TransactionModel.OtherData("My Invoice For My Fast Food","$"))
+                    TransactionModel.OtherData("Invoice","$"))
 
                 InvoiceMakerInit.newInstance()
                     .setContext(this@MainActivity)
                     .setFolderTarget("myinvoice")
+                    .setCustomPage(SMALL_INVOICE)
                     .setTransactionModel(transaction)
                     .setOnInvoiceMakerInitListener(this)
                     .setOnInvoiceMakerRequestPermissionListener(this)
