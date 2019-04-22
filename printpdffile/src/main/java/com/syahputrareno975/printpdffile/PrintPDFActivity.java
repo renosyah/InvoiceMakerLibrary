@@ -53,6 +53,7 @@ public class PrintPDFActivity extends AppCompatActivity implements
     private int PERMISSION_REQUEST_CODE = 142;
 
     private File pdfFile;
+    private String dataToPrint;
 
 
     @Override
@@ -69,6 +70,10 @@ public class PrintPDFActivity extends AppCompatActivity implements
 
         if (intent.hasExtra("file_path")) {
             this.pdfFile = new File(intent.getStringExtra("file_path"));
+        }
+
+        if (intent.hasExtra("data_string")){
+            this.dataToPrint = intent.getStringExtra("data_string");
         }
 
         this.deviceListView = findViewById(R.id.printerList);
@@ -146,6 +151,7 @@ public class PrintPDFActivity extends AppCompatActivity implements
                         dialog.dismiss();
                     }
                 })
+                .setCancelable(false)
                 .create()
                 .show();
 
@@ -168,6 +174,7 @@ public class PrintPDFActivity extends AppCompatActivity implements
                 dialog.dismiss();
             }
         });
+        this.progressDialog.setCancelable(false);
 
     }
 
@@ -189,6 +196,7 @@ public class PrintPDFActivity extends AppCompatActivity implements
                         dialog.dismiss();
                     }
                 })
+                .setCancelable(false)
                 .create()
                 .show();
     }
@@ -274,9 +282,15 @@ public class PrintPDFActivity extends AppCompatActivity implements
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
+
+        if (!this.bluetoothAdapter.isEnabled()){
+            showDialogIfBluetoothIsOff();
+            return;
+        }
+
         new AlertDialog.Builder(context)
                 .setTitle("Print")
-                .setMessage("Print this")
+                .setMessage("Print this data with "+deviceList.get(position).name+"?")
                 .setPositiveButton("Print", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -292,6 +306,7 @@ public class PrintPDFActivity extends AppCompatActivity implements
                         dialog.dismiss();
                     }
                 })
+                .setCancelable(false)
                 .create()
                 .show();
 
@@ -300,6 +315,10 @@ public class PrintPDFActivity extends AppCompatActivity implements
     @Override
     public void onRefresh() {
         printerListRefresh.setRefreshing(!printerListRefresh.isRefreshing());
+        if (!this.bluetoothAdapter.isEnabled()){
+            showDialogIfBluetoothIsOff();
+            return;
+        }
         startScanning();
     }
 
@@ -342,7 +361,7 @@ public class PrintPDFActivity extends AppCompatActivity implements
     private void openBT() {
         try {
 
-            UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
+            UUID uuid = UUID.randomUUID();
             mmSocket = mmDevice.createRfcommSocketToServiceRecord(uuid);
             mmSocket.connect();
             mmOutputStream = mmSocket.getOutputStream();
@@ -429,7 +448,11 @@ public class PrintPDFActivity extends AppCompatActivity implements
     void sendData(){
         try {
 
-            mmOutputStream.write(readPDF(this.pdfFile).getBytes());
+            mmOutputStream.write(this.dataToPrint == null ?
+                    readPDF(this.pdfFile).getBytes() :
+                    this.pdfFile == null ?
+                            this.dataToPrint.getBytes() :
+                    "".getBytes());
 
         } catch (Exception e) {
             e.printStackTrace();
