@@ -233,7 +233,7 @@ public class PrintPDFActivity extends AppCompatActivity implements
                         Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? device.getType() : 0,
                         device.getBondState());
 
-                if (!isAlreadyInList(deviceList, data)) {
+                if (!isAlreadyInList(deviceList, data) && isBluetoothPrinterDevice(data)) {
                     deviceList.add(data);
                     setAdapter();
                 }
@@ -294,9 +294,7 @@ public class PrintPDFActivity extends AppCompatActivity implements
                 .setPositiveButton("Print", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if (pdfFile != null) {
-                            findBT(deviceList.get(position));
-                        }
+                        findBT(deviceList.get(position));
                         dialog.dismiss();
                     }
                 })
@@ -319,6 +317,7 @@ public class PrintPDFActivity extends AppCompatActivity implements
             showDialogIfBluetoothIsOff();
             return;
         }
+        deviceList.clear();
         startScanning();
     }
 
@@ -332,6 +331,14 @@ public class PrintPDFActivity extends AppCompatActivity implements
             }
         }
         return isAlreadyIList;
+    }
+
+    private Boolean isBluetoothPrinterDevice(BluetoothDeviceDataModel b){
+        if (b.bluetoothClass != null){
+            return b.bluetoothClass.getDeviceClass() == 1536
+                    || b.bluetoothClass.getMajorDeviceClass() == 1536;
+        }
+        return false;
     }
 
 
@@ -361,7 +368,7 @@ public class PrintPDFActivity extends AppCompatActivity implements
     private void openBT() {
         try {
 
-            UUID uuid = UUID.randomUUID();
+            UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
             mmSocket = mmDevice.createRfcommSocketToServiceRecord(uuid);
             mmSocket.connect();
             mmOutputStream = mmSocket.getOutputStream();
@@ -448,11 +455,12 @@ public class PrintPDFActivity extends AppCompatActivity implements
     void sendData(){
         try {
 
-            mmOutputStream.write(this.dataToPrint == null ?
-                    readPDF(this.pdfFile).getBytes() :
-                    this.pdfFile == null ?
-                            this.dataToPrint.getBytes() :
-                    "".getBytes());
+            if (this.dataToPrint != null){
+                mmOutputStream.write(this.dataToPrint.getBytes());
+            }else if (this.pdfFile != null){
+                mmOutputStream.write(readPDF(this.pdfFile).getBytes());
+            }
+
 
         } catch (Exception e) {
             e.printStackTrace();
