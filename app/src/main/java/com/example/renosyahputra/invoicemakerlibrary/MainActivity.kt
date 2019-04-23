@@ -10,6 +10,8 @@ import com.example.renosyahputra.invoicemakerlib.invoice_maker.InvoiceMakerInit.
 import com.example.renosyahputra.invoicemakerlib.transaction_model.TransactionModel
 import com.example.renosyahputra.pdfviewerlibrary.PdfViewer
 import com.syahputrareno975.printpdffile.PrintPDFActivity
+import com.syahputrareno975.printpdffile.initFindPrinter.FindPrinterInit
+import com.syahputrareno975.printpdffile.model.BluetoothDeviceDataModel
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
 
@@ -18,13 +20,14 @@ import java.io.File
 class MainActivity : AppCompatActivity(),View.OnClickListener,
     InvoiceMakerInit.OnInvoiceMakerInitListener,
     InvoiceMakerInit.OnInvoiceMakerRequestPermissionListener,
-    PdfViewer.OnPdfVewerListener {
+    PdfViewer.OnPdfVewerListener, FindPrinterInit.OnFindPrinterInitListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         printPdf.setOnClickListener(this)
         printPdfCustom.setOnClickListener(this)
+        findPrinterDevice.setOnClickListener(this)
 
     }
 
@@ -67,20 +70,33 @@ class MainActivity : AppCompatActivity(),View.OnClickListener,
                     .setOnInvoiceMakerRequestPermissionListener(this)
                     .makePDF("invoice1001_custom.pdf")
             }
+
+
+            findPrinterDevice -> {
+
+                FindPrinterInit.newInstance()
+                    .setContext(this@MainActivity)
+                    .allBluetoothDevice()
+                    .setOnFindPrinterInitListener(this)
+                    .findDevice()
+
+            }
         }
+    }
+
+
+    override fun onChoosed(bluetoothDeviceData: BluetoothDeviceDataModel) {
+        Toast.makeText(this@MainActivity,"Device Name : ${bluetoothDeviceData.name},Device Address : ${bluetoothDeviceData.address}",Toast.LENGTH_SHORT).show()
     }
 
     override fun onInvoiceCreated(file: File) {
 
-//        PdfViewer.newInstance()
-//            .setContext(this@MainActivity)
-//            .setPdfFile(file)
-//            .setOnPdfVewerListener(this)
-//            .viewPDF()
+        PdfViewer.newInstance()
+            .setContext(this@MainActivity)
+            .setPdfFile(file)
+            .setOnPdfVewerListener(this)
+            .viewPDF()
 
-        val i = Intent(this@MainActivity, PrintPDFActivity::class.java)
-        i.putExtra("file_path",file.path)
-        startActivity(i)
 
     }
     override fun onFinishView() {
@@ -93,5 +109,8 @@ class MainActivity : AppCompatActivity(),View.OnClickListener,
 
     override fun onPermissionResult(isGranted: Boolean) {
         Toast.makeText(this@MainActivity,if (isGranted) "Granted" else "not granted",Toast.LENGTH_SHORT).show()
+    }
+    override fun onFinish() {
+        Toast.makeText(this@MainActivity,"Finish find Printer",Toast.LENGTH_SHORT).show()
     }
 }

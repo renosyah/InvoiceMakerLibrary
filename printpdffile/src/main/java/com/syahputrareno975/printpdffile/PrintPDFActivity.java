@@ -3,10 +3,7 @@ package com.syahputrareno975.printpdffile;
 import android.Manifest;
 import android.app.Activity;
 import android.app.ProgressDialog;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothManager;
-import android.bluetooth.BluetoothSocket;
+import android.bluetooth.*;
 import android.content.*;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -22,8 +19,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.*;
-import com.itextpdf.text.pdf.PdfReader;
-import com.itextpdf.text.pdf.parser.PdfTextExtractor;
 import com.syahputrareno975.printpdffile.model.BluetoothDeviceDataModel;
 
 import java.io.File;
@@ -52,8 +47,7 @@ public class PrintPDFActivity extends AppCompatActivity implements
     private ProgressDialog progressDialog;
     private int PERMISSION_REQUEST_CODE = 142;
 
-    private File pdfFile;
-    private String dataToPrint;
+    private Boolean printerDeviceOnly = true;
 
 
     @Override
@@ -68,12 +62,8 @@ public class PrintPDFActivity extends AppCompatActivity implements
         this.context = this;
         this.intent = getIntent();
 
-        if (intent.hasExtra("file_path")) {
-            this.pdfFile = new File(intent.getStringExtra("file_path"));
-        }
-
-        if (intent.hasExtra("data_string")){
-            this.dataToPrint = intent.getStringExtra("data_string");
+        if (intent.hasExtra("printer_only")){
+            this.printerDeviceOnly = intent.getBooleanExtra("printer_only",true);
         }
 
         this.deviceListView = findViewById(R.id.printerList);
@@ -226,14 +216,13 @@ public class PrintPDFActivity extends AppCompatActivity implements
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 ParcelUuid parcelUuid = (ParcelUuid) intent.getParcelableExtra(BluetoothDevice.EXTRA_UUID);
 
-                BluetoothDeviceDataModel data = new BluetoothDeviceDataModel(device.getUuids(),
-                        device.getBluetoothClass(),
+                BluetoothDeviceDataModel data = new BluetoothDeviceDataModel(
                         device.getName(),
                         device.getAddress(),
                         Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? device.getType() : 0,
                         device.getBondState());
 
-                if (!isAlreadyInList(deviceList, data) && isBluetoothPrinterDevice(data)) {
+                if (!isAlreadyInList(deviceList, data) && isBluetoothPrinterDevice(device.getBluetoothClass())) {
                     deviceList.add(data);
                     setAdapter();
                 }
@@ -244,10 +233,14 @@ public class PrintPDFActivity extends AppCompatActivity implements
                 }
 
             } else if (BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)) {
-                progressDialog.show();
+                if (!progressDialog.isShowing()) {
+                    progressDialog.show();
+                }
 
             } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
-                progressDialog.dismiss();
+                if (progressDialog.isShowing()) {
+                    progressDialog.dismiss();
+                }
 
                 if (isListIsEmpty()) {
                     showDialogDeviceNotFound();
@@ -260,7 +253,7 @@ public class PrintPDFActivity extends AppCompatActivity implements
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == PERMISSION_REQUEST_CODE) {
-            Intent i = new Intent(context, this.getClass());
+            Intent i = getIntent();
             i.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
             startActivity(i);
             finish();
@@ -288,25 +281,10 @@ public class PrintPDFActivity extends AppCompatActivity implements
             return;
         }
 
-        new AlertDialog.Builder(context)
-                .setTitle("Print")
-                .setMessage("Print this data with "+deviceList.get(position).name+"?")
-                .setPositiveButton("Print", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        findBT(deviceList.get(position));
-                        dialog.dismiss();
-                    }
-                })
-                .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                })
-                .setCancelable(false)
-                .create()
-                .show();
+        Intent i = new Intent();
+        i.putExtra("printer_data",deviceList.get(position));
+        setResult(Activity.RESULT_OK,i);
+        finish();
 
     }
 
@@ -333,10 +311,13 @@ public class PrintPDFActivity extends AppCompatActivity implements
         return isAlreadyIList;
     }
 
-    private Boolean isBluetoothPrinterDevice(BluetoothDeviceDataModel b){
-        if (b.bluetoothClass != null){
-            return b.bluetoothClass.getDeviceClass() == 1536
-                    || b.bluetoothClass.getMajorDeviceClass() == 1536;
+    private Boolean isBluetoothPrinterDevice(BluetoothClass b){
+        if (!printerDeviceOnly){
+            return true;
+        }
+        if (b != null){
+            return b.getDeviceClass() == 1536
+                    || b.getMajorDeviceClass() == 1536;
         }
         return false;
     }
@@ -349,11 +330,7 @@ public class PrintPDFActivity extends AppCompatActivity implements
 
     OutputStream mmOutputStream;
     InputStream mmInputStream;
-    Thread workerThread;
 
-    byte[] readBuffer;
-    int readBufferPosition;
-    volatile boolean stopWorker;
 
     void findBT(BluetoothDeviceDataModel b) {
         mmDevice = bluetoothAdapter.getRemoteDevice(b.address);
@@ -374,134 +351,11 @@ public class PrintPDFActivity extends AppCompatActivity implements
             mmOutputStream = mmSocket.getOutputStream();
             mmInputStream = mmSocket.getInputStream();
 
-            beginListenForData();
-
         } catch (Exception e) {
             e.printStackTrace();
             Log.e("IoexceptionopenBT",e.getMessage());
         }
 
-
-    }
-
-    private void beginListenForData() {
-        try {
-            final Handler handler = new Handler();
-            final byte delimiter = 10;
-
-            stopWorker = false;
-            readBufferPosition = 0;
-            readBuffer = new byte[1024];
-
-            workerThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    while (!Thread.currentThread().isInterrupted() && !stopWorker) {
-                        try {
-
-                            int bytesAvailable = mmInputStream.available();
-
-                            if (bytesAvailable > 0) {
-
-                                byte[] packetBytes = new byte[bytesAvailable];
-                                mmInputStream.read(packetBytes);
-
-                                for (int i = 0; i < bytesAvailable; i++) {
-
-                                    byte b = packetBytes[i];
-                                    if (b == delimiter) {
-
-                                        byte[] encodedBytes = new byte[readBufferPosition];
-                                        System.arraycopy(readBuffer, 0, encodedBytes, 0, encodedBytes.length);
-
-                                        // specify US-ASCII encoding
-                                        final String data = new String(encodedBytes, "US-ASCII");
-                                        readBufferPosition = 0;
-
-                                        // tell the user data were sent to bluetooth printer device
-                                        handler.post(new Runnable() {
-                                            public void run() {
-
-                                            }
-                                        });
-
-                                    } else {
-                                        readBuffer[readBufferPosition++] = b;
-                                    }
-                                }
-                            }
-
-                        } catch (IOException e) {
-                            stopWorker = true;
-                            Log.e("IoexceptionbeginListen",e.getMessage());
-
-                        } catch (NullPointerException e){
-                            Log.e("NullbeginListenForData",e.getMessage());
-                        }
-                    }
-                }
-            });
-            workerThread.start();
-
-        } catch (Exception e) {
-            Log.e("exceptionbeginListen",e.getMessage());
-        }
-
-        sendData();
-
-    }
-
-
-    void sendData(){
-        try {
-
-            if (this.dataToPrint != null){
-                mmOutputStream.write(this.dataToPrint.getBytes());
-            }else if (this.pdfFile != null){
-                mmOutputStream.write(readPDF(this.pdfFile).getBytes());
-            }
-
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.e("exceptionbsendData",e.getMessage());
-        }
-
-        closeBT();
-    }
-
-    void closeBT()  {
-        try {
-            stopWorker = true;
-            mmOutputStream.close();
-            mmInputStream.close();
-            mmSocket.close();
-
-            // tell the user bluetooth is close
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.e("exceptioncloseBT",e.getMessage());
-        }
-    }
-
-    String readPDF(File file){
-
-        String parsedText="";
-        try {
-            PdfReader reader = new PdfReader(file.getPath());
-            int n = reader.getNumberOfPages();
-            for (int i = 0; i <n ; i++) {
-                parsedText += PdfTextExtractor.getTextFromPage(reader, i+1)+"\n";
-            }
-            reader.close();
-
-        } catch (Exception e) {
-
-        }
-
-        Log.e("print result",parsedText);
-
-        return parsedText;
     }
 
 }
