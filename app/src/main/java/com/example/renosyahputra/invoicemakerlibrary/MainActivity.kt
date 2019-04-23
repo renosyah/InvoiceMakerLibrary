@@ -15,9 +15,7 @@ import com.syahputrareno975.printpdffile.model.BluetoothDeviceDataModel.connectT
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
 import com.syahputrareno975.printpdffile.task.BluetoothPrinter
-
-
-
+import java.util.*
 
 
 class MainActivity : AppCompatActivity(),View.OnClickListener,
@@ -91,9 +89,17 @@ class MainActivity : AppCompatActivity(),View.OnClickListener,
     override fun onChoosed(bluetoothDeviceData: BluetoothDeviceDataModel) {
         Toast.makeText(this@MainActivity,"Print Invoice Use : Device Name : ${bluetoothDeviceData.name},Device Address : ${bluetoothDeviceData.address}",Toast.LENGTH_SHORT).show()
 
+        val cal = Calendar.getInstance()
+
         val item = ArrayList<TransactionModel.Item>()
-        item.add(TransactionModel.Item("Burger",4,100))
-        item.add(TransactionModel.Item("SandWitch",2,200))
+        item.add(TransactionModel.Item("Burger",1,100))
+        item.add(TransactionModel.Item("SandWitch",1,210))
+        item.add(TransactionModel.Item("Burger King",1,140))
+        item.add(TransactionModel.Item("Potato",1,121))
+        item.add(TransactionModel.Item("Milkshake",2,112))
+        item.add(TransactionModel.Item("Donut",3,126))
+        item.add(TransactionModel.Item("nugget",2,105))
+        item.add(TransactionModel.Item("Soda",1,250))
 
         val transaction = TransactionModel(TransactionModel.DateTransaction(9,12,2019),item,
             TransactionModel.OtherData("Invoice","$"))
@@ -106,7 +112,11 @@ class MainActivity : AppCompatActivity(),View.OnClickListener,
                 mPrinter.printText("--------------------------------")
                 mPrinter.addNewLine()
                 mPrinter.setAlign(BluetoothPrinter.ALIGN_CENTER)
-                mPrinter.printText(transaction.otherDataTransaction.titleInvoice)
+                mPrinter.printText("${transaction.otherDataTransaction.titleInvoice}")
+                mPrinter.addNewLine()
+                mPrinter.printText("--------------------------------")
+                mPrinter.addNewLine()
+                mPrinter.printText("${cal.get(Calendar.HOUR_OF_DAY)}.${cal.get(Calendar.MINUTE)}.${cal.get(Calendar.DAY_OF_MONTH)+1}-${cal.get(Calendar.MONTH)}-${cal.get(Calendar.YEAR)}")
                 mPrinter.addNewLine()
                 mPrinter.printText("--------------------------------")
                 mPrinter.addNewLine()
@@ -114,21 +124,20 @@ class MainActivity : AppCompatActivity(),View.OnClickListener,
                 mPrinter.setAlign(BluetoothPrinter.ALIGN_RIGHT)
                 for (i in item){
 
-                    mPrinter.addNewLine()
                     mPrinter.printText("${i.itemName}   ")
                     mPrinter.printText("${i.quantity}   ")
-                    mPrinter.printText("${transaction.otherDataTransaction.currency}${i.price}   ")
+                    mPrinter.printText("${transaction.otherDataTransaction.currency} ${i.price}   ")
                     mPrinter.printText("${transaction.otherDataTransaction.currency} ${i.subTotal}")
                     mPrinter.addNewLine()
 
                 }
 
+                mPrinter.addNewLine()
+                mPrinter.addNewLine()
                 mPrinter.printText("--------------------------------")
-                mPrinter.addNewLine()
-                mPrinter.addNewLine()
 
                 mPrinter.setAlign(BluetoothPrinter.ALIGN_RIGHT)
-                mPrinter.printText("Total : ${transaction.total}")
+                mPrinter.printText("Total : ${transaction.otherDataTransaction.currency} ${transaction.total}")
 
                 mPrinter.feedPaper()
 
