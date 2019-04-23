@@ -8,7 +8,6 @@ import android.content.*;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.ParcelUuid;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -21,14 +20,12 @@ import android.view.View;
 import android.widget.*;
 import com.syahputrareno975.printpdffile.model.BluetoothDeviceDataModel;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class PrintPDFActivity extends AppCompatActivity implements
+public class FindBluetoothDeviceActivity extends AppCompatActivity implements
         AdapterView.OnItemClickListener,
         SwipeRefreshLayout.OnRefreshListener {
 
@@ -39,7 +36,7 @@ public class PrintPDFActivity extends AppCompatActivity implements
 
     private TextView textListEmpty;
     private ListView deviceListView;
-    private SwipeRefreshLayout printerListRefresh;
+    private SwipeRefreshLayout deviceListViewRefresh;
 
     private ArrayList<BluetoothDeviceDataModel> deviceList = new ArrayList<BluetoothDeviceDataModel>();
     private BluetoothAdapter bluetoothAdapter;
@@ -53,7 +50,7 @@ public class PrintPDFActivity extends AppCompatActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_print_pdf);
+        setContentView(R.layout.activity_find_device);
         initWidget();
     }
 
@@ -66,11 +63,11 @@ public class PrintPDFActivity extends AppCompatActivity implements
             this.printerDeviceOnly = intent.getBooleanExtra("printer_only",true);
         }
 
-        this.deviceListView = findViewById(R.id.printerList);
+        this.deviceListView = findViewById(R.id.deviceListView);
         this.deviceListView.setOnItemClickListener(this);
 
-        this.printerListRefresh = findViewById(R.id.printerListRefresh);
-        this.printerListRefresh.setOnRefreshListener(this);
+        this.deviceListViewRefresh = findViewById(R.id.deviceListViewRefresh);
+        this.deviceListViewRefresh.setOnRefreshListener(this);
 
         this.textListEmpty = findViewById(R.id.textListEmpty);
         this.textListEmpty.setVisibility(View.GONE);
@@ -172,7 +169,7 @@ public class PrintPDFActivity extends AppCompatActivity implements
 
         new AlertDialog.Builder(context)
                 .setTitle("No Device Found")
-                .setMessage("Device Not Found,you want to scan again?")
+                .setMessage("Bluetooth Scanning not found any device,do you want to scan again?")
                 .setPositiveButton("Scan", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -290,7 +287,7 @@ public class PrintPDFActivity extends AppCompatActivity implements
 
     @Override
     public void onRefresh() {
-        printerListRefresh.setRefreshing(!printerListRefresh.isRefreshing());
+        deviceListViewRefresh.setRefreshing(!deviceListViewRefresh.isRefreshing());
         if (!this.bluetoothAdapter.isEnabled()){
             showDialogIfBluetoothIsOff();
             return;
@@ -325,37 +322,17 @@ public class PrintPDFActivity extends AppCompatActivity implements
 
     // --------------- //
 
-    BluetoothSocket mmSocket;
-    BluetoothDevice mmDevice;
 
-    OutputStream mmOutputStream;
-    InputStream mmInputStream;
-
-
-    void findBT(BluetoothDeviceDataModel b) {
-        mmDevice = bluetoothAdapter.getRemoteDevice(b.address);
-        if (mmDevice == null){
-            Toast.makeText(context,"cannot connected to : "+b.name,Toast.LENGTH_SHORT).show();
-            return;
+    private static BluetoothDevice ConnectToBluetoothDevice(Context context,BluetoothDeviceDataModel b) {
+        BluetoothAdapter bluetoothAdapter;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            BluetoothManager bluetoothManager = (BluetoothManager)
+                    context.getSystemService(Context.BLUETOOTH_SERVICE);
+            bluetoothAdapter = bluetoothManager.getAdapter();
+        } else {
+            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         }
-        openBT();
-
-    }
-
-    private void openBT() {
-        try {
-
-            UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
-            mmSocket = mmDevice.createRfcommSocketToServiceRecord(uuid);
-            mmSocket.connect();
-            mmOutputStream = mmSocket.getOutputStream();
-            mmInputStream = mmSocket.getInputStream();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.e("IoexceptionopenBT",e.getMessage());
-        }
-
+        return bluetoothAdapter.getRemoteDevice(b.address);
     }
 
 }

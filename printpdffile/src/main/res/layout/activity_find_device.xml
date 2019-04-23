@@ -6,10 +6,10 @@
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".PrintPDFActivity">
+        tools:context=".FindBluetoothDeviceActivity">
 
     <android.support.v4.widget.SwipeRefreshLayout
-            android:id="@+id/printerListRefresh"
+            android:id="@+id/deviceListViewRefresh"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
@@ -28,7 +28,7 @@
                     android:layout_height="match_parent"/>
 
         <ListView
-                android:id="@+id/printerList"
+                android:id="@+id/deviceListView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 

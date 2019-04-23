@@ -14,7 +14,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import com.syahputrareno975.printpdffile.PrintPDFActivity;
+import com.syahputrareno975.printpdffile.FindBluetoothDeviceActivity;
 import com.syahputrareno975.printpdffile.R;
 import com.syahputrareno975.printpdffile.model.BluetoothDeviceDataModel;
 
@@ -47,7 +47,7 @@ public class FindPrinterDialogFragment extends DialogFragment {
         getDialog().getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         getDialog().requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        Intent i = new Intent(context, PrintPDFActivity.class);
+        Intent i = new Intent(context, FindBluetoothDeviceActivity.class);
         i.putExtra("printer_only",this.printerDeviceOnly);
         startActivityForResult(i,RequestCode);
 

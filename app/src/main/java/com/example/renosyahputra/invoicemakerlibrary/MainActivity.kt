@@ -1,6 +1,5 @@
 package com.example.renosyahputra.invoicemakerlibrary
 
-import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.View
@@ -9,7 +8,6 @@ import com.example.renosyahputra.invoicemakerlib.invoice_maker.InvoiceMakerInit
 import com.example.renosyahputra.invoicemakerlib.invoice_maker.InvoiceMakerInit.SMALL_INVOICE
 import com.example.renosyahputra.invoicemakerlib.transaction_model.TransactionModel
 import com.example.renosyahputra.pdfviewerlibrary.PdfViewer
-import com.syahputrareno975.printpdffile.PrintPDFActivity
 import com.syahputrareno975.printpdffile.initFindPrinter.FindPrinterInit
 import com.syahputrareno975.printpdffile.model.BluetoothDeviceDataModel
 import kotlinx.android.synthetic.main.activity_main.*
