@@ -133,7 +133,6 @@ class MainActivity : AppCompatActivity(),View.OnClickListener,
                 }
 
                 mPrinter.addNewLine()
-                mPrinter.addNewLine()
                 mPrinter.printText("--------------------------------")
 
                 mPrinter.setAlign(BluetoothPrinter.ALIGN_RIGHT)
