@@ -1,6 +1,11 @@
 package com.syahputrareno975.printpdffile.model;
 
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothClass;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
+import android.content.Context;
+import android.os.Build;
 import android.os.ParcelUuid;
 
 import java.io.Serializable;
@@ -18,5 +23,19 @@ public class BluetoothDeviceDataModel implements Serializable {
         this.address = address;
         this.type = type;
         this.bondState = bondState;
+    }
+
+
+
+    public static BluetoothDevice connectToBluetoothDevice(Context context, BluetoothDeviceDataModel b) {
+        BluetoothAdapter bluetoothAdapter;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            BluetoothManager bluetoothManager = (BluetoothManager)
+                    context.getSystemService(Context.BLUETOOTH_SERVICE);
+            bluetoothAdapter = bluetoothManager.getAdapter();
+        } else {
+            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        }
+        return bluetoothAdapter.getRemoteDevice(b.address);
     }
 }

@@ -320,19 +320,4 @@ public class FindBluetoothDeviceActivity extends AppCompatActivity implements
     }
 
 
-    // --------------- //
-
-
-    private static BluetoothDevice ConnectToBluetoothDevice(Context context,BluetoothDeviceDataModel b) {
-        BluetoothAdapter bluetoothAdapter;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            BluetoothManager bluetoothManager = (BluetoothManager)
-                    context.getSystemService(Context.BLUETOOTH_SERVICE);
-            bluetoothAdapter = bluetoothManager.getAdapter();
-        } else {
-            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        }
-        return bluetoothAdapter.getRemoteDevice(b.address);
-    }
-
 }

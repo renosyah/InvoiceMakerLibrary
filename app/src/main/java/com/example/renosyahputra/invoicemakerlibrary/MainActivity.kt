@@ -2,6 +2,7 @@ package com.example.renosyahputra.invoicemakerlibrary
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import com.example.renosyahputra.invoicemakerlib.invoice_maker.InvoiceMakerInit
@@ -10,15 +11,20 @@ import com.example.renosyahputra.invoicemakerlib.transaction_model.TransactionMo
 import com.example.renosyahputra.pdfviewerlibrary.PdfViewer
 import com.syahputrareno975.printpdffile.initFindPrinter.FindPrinterInit
 import com.syahputrareno975.printpdffile.model.BluetoothDeviceDataModel
+import com.syahputrareno975.printpdffile.model.BluetoothDeviceDataModel.connectToBluetoothDevice
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
+import com.syahputrareno975.printpdffile.task.BluetoothPrinter
+
+
 
 
 
 class MainActivity : AppCompatActivity(),View.OnClickListener,
     InvoiceMakerInit.OnInvoiceMakerInitListener,
     InvoiceMakerInit.OnInvoiceMakerRequestPermissionListener,
-    PdfViewer.OnPdfVewerListener, FindPrinterInit.OnFindPrinterInitListener {
+    PdfViewer.OnPdfVewerListener,
+    FindPrinterInit.OnFindPrinterInitListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,7 +80,6 @@ class MainActivity : AppCompatActivity(),View.OnClickListener,
 
                 FindPrinterInit.newInstance()
                     .setContext(this@MainActivity)
-                    .allBluetoothDevice()
                     .setOnFindPrinterInitListener(this)
                     .findDevice()
 
@@ -84,7 +89,59 @@ class MainActivity : AppCompatActivity(),View.OnClickListener,
 
 
     override fun onChoosed(bluetoothDeviceData: BluetoothDeviceDataModel) {
-        Toast.makeText(this@MainActivity,"Device Name : ${bluetoothDeviceData.name},Device Address : ${bluetoothDeviceData.address}",Toast.LENGTH_SHORT).show()
+        Toast.makeText(this@MainActivity,"Print Invoice Use : Device Name : ${bluetoothDeviceData.name},Device Address : ${bluetoothDeviceData.address}",Toast.LENGTH_SHORT).show()
+
+        val item = ArrayList<TransactionModel.Item>()
+        item.add(TransactionModel.Item("Burger",4,100))
+        item.add(TransactionModel.Item("SandWitch",2,200))
+
+        val transaction = TransactionModel(TransactionModel.DateTransaction(9,12,2019),item,
+            TransactionModel.OtherData("Invoice","$"))
+
+        val mPrinter = BluetoothPrinter(connectToBluetoothDevice(this@MainActivity,bluetoothDeviceData))
+        mPrinter.connectPrinter(object : BluetoothPrinter.PrinterConnectListener {
+
+            override fun onConnected() {
+
+                mPrinter.printText("--------------------------------")
+                mPrinter.addNewLine()
+                mPrinter.setAlign(BluetoothPrinter.ALIGN_CENTER)
+                mPrinter.printText(transaction.otherDataTransaction.titleInvoice)
+                mPrinter.addNewLine()
+                mPrinter.printText("--------------------------------")
+                mPrinter.addNewLine()
+
+                mPrinter.setAlign(BluetoothPrinter.ALIGN_RIGHT)
+                for (i in item){
+
+                    mPrinter.addNewLine()
+                    mPrinter.printText("${i.itemName}   ")
+                    mPrinter.printText("${i.quantity}   ")
+                    mPrinter.printText("${transaction.otherDataTransaction.currency}${i.price}   ")
+                    mPrinter.printText("${transaction.otherDataTransaction.currency} ${i.subTotal}")
+                    mPrinter.addNewLine()
+
+                }
+
+                mPrinter.printText("--------------------------------")
+                mPrinter.addNewLine()
+                mPrinter.addNewLine()
+
+                mPrinter.setAlign(BluetoothPrinter.ALIGN_RIGHT)
+                mPrinter.printText("Total : ${transaction.total}")
+
+                mPrinter.feedPaper()
+
+                mPrinter.finish()
+            }
+
+            override fun onFailed() {
+                Log.d("BluetoothPrinter", "Conection failed")
+            }
+
+        })
+
+
     }
 
     override fun onInvoiceCreated(file: File) {
